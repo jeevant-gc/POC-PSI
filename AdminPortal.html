@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - Patient Feedback</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+    <style>
+        /* Define consistent color and sizing variables */
+        :root {
+            --primary-blue: #0066cc;
+            --secondary-green: #28a745;
+            --accent-red: #dc3545;
+            --text-dark: #333;
+            --text-medium: #555;
+            --text-light: #777;
+            --bg-light: #f5f7fa;
+            --bg-dark-blue: #0056b3;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-medium: rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--bg-light);
+            color: var(--text-dark);
+        }
+
+        /* Header Styling */
+        header {
+            background: var(--primary-blue);
+            color: white;
+            padding: 1.25rem 1.875rem; /* 20px 30px */
+            font-size: 1.5rem;
+            font-weight: 600;
+            box-shadow: 0 0.125rem 0.625rem var(--shadow-light); /* 2px 10px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 4rem; /* Ensure consistent height */
+        }
+
+        /* Navigation Bar Styling */
+        nav {
+            display: flex;
+            justify-content: center; /* Center navigation buttons */
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            gap: 1rem; /* 16px */
+            background: #e9ecef;
+            padding: 0.75rem 1.25rem; /* 12px 20px */
+            border-bottom: 1px solid #ddd;
+            box-shadow: 0 0.125rem 0.3125rem rgba(0,0,0,0.05); /* 2px 5px */
+        }
+
+        nav button {
+            padding: 0.75rem 1.25rem; /* 12px 20px */
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 0.5rem; /* 8px */
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            transition: all 0.2s ease;
+            box-shadow: 0 0.125rem 0.3125rem rgba(0,0,0,0.05); /* 2px 5px */
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem; /* 8px */
+        }
+
+        nav button:hover {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+            transform: translateY(-0.125rem); /* -2px */
+            box-shadow: 0 0.25rem 0.625rem rgba(0, 123, 255, 0.2); /* 4px 10px */
+        }
+
+        nav button.active-tab {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0.1875rem 0.5rem rgba(0, 123, 255, 0.3); /* 3px 8px */
+            font-weight: 600;
+        }
+
+        /* Section and Card Styling */
+        section {
+            display: none;
+            padding: 1.25rem; /* 20px */
+        }
+        section.active {
+            display: block;
+            animation: fadeIn 0.5s forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(1.25rem); /* 20px */ }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: white;
+            border-radius: 1rem; /* 16px */
+            padding: 1.5rem; /* 24px */
+            margin: 1.25rem auto; /* 20px auto for centering */
+            max-width: 75rem; /* 1200px - wider for admin content */
+            width: calc(100% - 2.5rem); /* Adjust for padding on smaller screens */
+            box-shadow: 0 0.3125rem 0.9375rem var(--shadow-light); /* 5px 15px */
+            box-sizing: border-box; /* Include padding in width */
+        }
+
+        .card h2 {
+            color: var(--primary-blue);
+            font-size: 1.6rem;
+            margin-top: 0;
+            margin-bottom: 1.25rem; /* 20px */
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* 8px */
+            justify-content: center;
+        }
+
+        /* Form Styling */
+        form {
+            display: flex;
+            flex-wrap: wrap; /* Allow form elements to wrap */
+            gap: 0.625rem; /* 10px */
+            margin-bottom: 1.25rem; /* 20px */
+            align-items: center;
+            justify-content: center;
+        }
+
+        input[type="text"], select {
+            padding: 0.625rem 0.75rem; /* 10px 12px */
+            border: 1px solid #ccc;
+            border-radius: 0.3125rem; /* 5px */
+            font-size: 0.95rem;
+            flex: 1; /* Allows inputs to grow */
+            min-width: 8rem; /* Minimum width for inputs */
+        }
+
+        form button[type="submit"] {
+            background-color: var(--secondary-green);
+            color: white;
+            border: none;
+            border-radius: 0.5rem; /* 8px */
+            padding: 0.625rem 1rem; /* 10px 16px */
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 0.125rem 0.3125rem rgba(40, 167, 69, 0.2); /* 2px 5px */
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3125rem; /* 5px */
+        }
+        form button[type="submit"]:hover {
+            background-color: #218838;
+            transform: translateY(-0.0625rem); /* -1px */
+            box-shadow: 0 0.1875rem 0.5rem rgba(40, 167, 69, 0.3); /* 3px 8px */
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: separate; /* Use separate to allow border-radius on cells */
+            border-spacing: 0;
+            margin-top: 0.9375rem; /* 15px */
+            background: white;
+            border-radius: 0.5rem; /* 8px */
+            overflow: hidden; /* Ensures rounded corners on table */
+            box-shadow: 0 0.125rem 0.3125rem var(--shadow-light); /* 2px 5px */
+        }
+
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 0.75rem 1rem; /* 12px 16px */
+            font-size: 0.95rem;
+            text-align: left;
+        }
+
+        th {
+            background: #f1f5f9; /* Light grey header */
+            font-weight: 600;
+            color: var(--text-medium);
+            text-transform: uppercase;
+        }
+
+        /* Table action buttons */
+        .actions button {
+            background-color: var(--accent-red); /* Red for delete */
+            color: white;
+            border: none;
+            border-radius: 0.3125rem; /* 5px */
+            padding: 0.4rem 0.75rem; /* 6.4px 12px */
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem; /* 4px */
+        }
+        .actions button:hover {
+            background-color: #c82333;
+            transform: translateY(-0.0625rem); /* -1px */
+        }
+
+        /* Image styling for dashboard */
+        #dashboard img {
+            width: 100%;
+            max-width: 62.5rem; /* 1000px */
+            border: 1px solid #ccc;
+            border-radius: 0.5rem; /* 8px */
+            margin-top: 1.25rem; /* 20px */
+            box-shadow: 0 0.125rem 0.3125rem rgba(0,0,0,0.05); /* 2px 5px */
+        }
+
+        /* Responsive adjustments */
+        /* Tablets (portrait) and larger phones */
+        @media (max-width: 48rem) { /* 768px */
+            header {
+                font-size: 1.2rem;
+                padding: 1rem 1.25rem; /* 16px 20px */
+            }
+            nav {
+                padding: 0.5rem 0.625rem; /* 8px 10px */
+                gap: 0.5rem; /* 8px */
+            }
+            nav button {
+                font-size: 0.9rem;
+                padding: 0.625rem 0.9375rem; /* 10px 15px */
+            }
+            .card {
+                padding: 1.25rem; /* 20px */
+                margin: 1rem auto; /* 16px auto */
+                width: calc(100% - 1.25rem); /* Adjust for smaller padding */
+            }
+            .card h2 {
+                font-size: 1.4rem;
+                margin-bottom: 1rem; /* 16px */
+            }
+            form {
+                flex-direction: column; /* Stack form elements vertically */
+                align-items: stretch;
+                gap: 0.75rem; /* 12px */
+            }
+            input[type="text"], select, form button[type="submit"] {
+                width: 100%; /* Full width when stacked */
+                min-width: unset; /* Remove min-width restriction */
+            }
+            th, td {
+                padding: 0.625rem 0.75rem; /* 10px 12px */
+                font-size: 0.85rem;
+            }
+            .actions button {
+                padding: 0.3rem 0.6rem; /* 4.8px 9.6px */
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Mobile phones */
+        @media (max-width: 30rem) { /* 480px */
+            header {
+                font-size: 1rem;
+                padding: 0.75rem 1rem; /* 12px 16px */
+            }
+            nav button {
+                font-size: 0.8rem;
+                padding: 0.5rem 0.75rem; /* 8px 12px */
+                margin: 0.25rem; /* 4px */
+            }
+            .card {
+                padding: 1rem; /* 16px */
+                margin: 0.75rem auto; /* 12px auto */
+                width: calc(100% - 1rem); /* Adjust for smaller padding */
+            }
+            .card h2 {
+                font-size: 1.2rem;
+                margin-bottom: 0.75rem; /* 12px */
+                flex-direction: column; /* Stack heading and icon */
+                gap: 0.25rem;
+            }
+            th, td {
+                padding: 0.5rem 0.625rem; /* 8px 10px */
+                font-size: 0.75rem;
+            }
+            .actions button {
+                font-size: 0.7rem;
+            }
+            /* Adjust image sizes for very small screens */
+            #dashboard img {
+                margin-top: 0.75rem; /* 12px */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>🏥 Admin Portal - Patient Feedback System</header>
+
+    <nav>
+        <button id="dashboard-tab" onclick="switchTab('dashboard')"><i class="fas fa-chart-bar"></i> Feedback Dashboard</button>
+        <button id="questions-tab" onclick="switchTab('questions')"><i class="fas fa-question-circle"></i> Configure Questions</button>
+        <button id="users-tab" onclick="switchTab('users')"><i class="fas fa-users"></i> User Management</button>
+    </nav>
+
+    <section id="dashboard" class="active">
+        <div class="card">
+            <h2>📈 Feedback Summary</h2>
+            <p>Graph generated from recent patient responses:</p>
+            <!-- IMPORTANT: These image paths are local (D:\...). 
+                 For a web application, replace these with hosted URLs (e.g., https://yourdomain.com/images/Summary.png) 
+                 or base64 encoded images if they are small and static. -->
+            <img src="D:\Growth Catalysts\MIT\PSI-POC\Summary2.png" alt="Feedback Summary Chart 1" />
+            <img src="D:\Growth Catalysts\MIT\PSI-POC\Summary1.png" alt="Feedback Summary Chart 2" />
+            <img src="D:\Growth Catalysts\MIT\PSI-POC\Summary.png" alt="Feedback Summary Chart 3" />
+        </div>
+    </section>
+
+    <section id="questions">
+        <div class="card">
+            <h2>🛠️ Configure Survey Questions</h2>
+            <form onsubmit="addQuestion(event)">
+                <input type="text" id="q_en" placeholder="Question (English)" required />
+                <input type="text" id="q_mr" placeholder="Question (Marathi)" required />
+                <select id="q_type">
+                    <option value="emoji">Emoji</option>
+                    <option value="voice">Voice</option>
+                </select>
+                <button type="submit"><i class="fas fa-plus"></i> Add</button>
+            </form>
+            <table>
+                <thead><tr><th>#</th><th>English</th><th>Marathi</th><th>Type</th><th>Actions</th></tr></thead>
+                <tbody id="questionList"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="users">
+        <div class="card">
+            <h2>👥 User Management</h2>
+            <form onsubmit="addUser(event)">
+                <input type="text" id="user_name" placeholder="User Name" required />
+                <select id="user_role">
+                    <option value="admin">Admin</option>
+                    <option value="employee">Employee</option>
+                    <option value="management">Management</option>
+                </select>
+                <button type="submit"><i class="fas fa-plus"></i> Create</button>
+            </form>
+            <table>
+                <thead><tr><th>#</th><th>Name</th><th>Role</th><th>Actions</th></tr></thead>
+                <tbody id="userList"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <script>
+        const questions = [];
+        const users = [];
+
+        // Store references to tab buttons for active state management
+        const dashboardTab = document.getElementById('dashboard-tab');
+        const questionsTab = document.getElementById('questions-tab');
+        const usersTab = document.getElementById('users-tab');
+
+        function switchTab(tabId) {
+            // Remove 'active' class from all sections
+            document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+            // Add 'active' class to the selected section
+            document.getElementById(tabId).classList.add("active");
+
+            // Remove 'active-tab' class from all nav buttons
+            document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active-tab"));
+            // Add 'active-tab' class to the clicked button
+            document.getElementById(tabId + '-tab').classList.add("active-tab");
+        }
+
+        function addQuestion(e) {
+            e.preventDefault();
+            const en = document.getElementById("q_en").value.trim();
+            const mr = document.getElementById("q_mr").value.trim();
+            const type = document.getElementById("q_type").value;
+            questions.push({ en, mr, type });
+            document.getElementById("q_en").value = "";
+            document.getElementById("q_mr").value = "";
+            renderQuestions();
+        }
+
+        function deleteQuestion(index) {
+            questions.splice(index, 1);
+            renderQuestions();
+        }
+
+        function renderQuestions() {
+            const tbody = document.getElementById("questionList");
+            tbody.innerHTML = "";
+            questions.forEach((q, i) => {
+                tbody.innerHTML += `<tr>
+                    <td>${i + 1}</td>
+                    <td>${q.en}</td>
+                    <td>${q.mr}</td>
+                    <td>${q.type}</td>
+                    <td class="actions"><button onclick="deleteQuestion(${i})"><i class="fas fa-trash-alt"></i> Delete</button></td>
+                </tr>`;
+            });
+        }
+
+        function addUser(e) {
+            e.preventDefault();
+            const name = document.getElementById("user_name").value.trim();
+            const role = document.getElementById("user_role").value;
+            users.push({ name, role });
+            document.getElementById("user_name").value = "";
+            renderUsers();
+        }
+
+        function deleteUser(index) {
+            users.splice(index, 1);
+            renderUsers();
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById("userList");
+            tbody.innerHTML = "";
+            users.forEach((u, i) => {
+                tbody.innerHTML += `<tr>
+                    <td>${i + 1}</td>
+                    <td>${u.name}</td>
+                    <td>${u.role}</td>
+                    <td class="actions"><button onclick="deleteUser(${i})"><i class="fas fa-trash-alt"></i> Delete</button></td>
+                </tr>`;
+            });
+        }
+
+        // Initial render for questions and users (if any data is pre-populated)
+        renderQuestions();
+        renderUsers();
+        // Set initial active tab
+        switchTab('dashboard');
+    </script>
+</body>
+</html>

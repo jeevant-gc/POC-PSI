@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Patient Feedback Tool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <style>
+        /* General Styles */
+        :root {
+            --primary-blue: #0066cc;
+            --secondary-green: #28a745;
+            --accent-red: #dc3545;
+            --accent-yellow: #ffc107;
+            --accent-teal: #17a2b8;
+            --text-dark: #333;
+            --text-medium: #555;
+            --text-light: #777;
+            --bg-light: #f0f2f5;
+            --bg-soft-blue: #e6f2ff;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-medium: rgba(0, 0, 0, 0.15);
+            --shadow-strong: rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-soft-blue);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            /* Centers horizontally */
+            align-items: flex-start;
+            /* Changed to allow content to flow from top and enable scroll */
+            min-height: 100vh;
+            /* Ensures it takes at least full viewport height */
+            color: var(--text-dark);
+            padding: 1.25rem;
+            /* 20px */
+            box-sizing: border-box;
+            /* REMOVED: overflow: hidden; */
+            /* This was the culprit for preventing scroll */
+        }
+
+        .container {
+            background: #ffffff;
+            border-radius: 1.25rem;
+            /* 20px */
+            padding: 1.875rem;
+            /* 30px */
+            max-width: 50rem;
+            /* 800px */
+            width: 100%;
+            box-shadow: 0 0.9375rem 2.5rem var(--shadow-medium);
+            /* 15px 40px */
+            box-sizing: border-box;
+            text-align: center;
+            position: relative;
+            /* For absolute positioning of screens for transitions */
+            /* REMOVED: overflow: hidden; */
+            /* This also contributed to the problem */
+        }
+
+        /* Logo and Tagline */
+        .logo-area {
+            margin-bottom: 1.25rem;
+            /* 20px */
+        }
+
+        .logo-area img {
+            max-height: 5rem;
+            /* 80px */
+            transition: transform 0.3s ease-out;
+        }
+
+        .logo-area img:hover {
+            transform: scale(1.05);
+        }
+
+        .tagline {
+            font-size: 1.1em;
+            /* Relative to parent font size */
+            color: var(--text-medium);
+            margin: 0.625rem 0 1.875rem;
+            /* 10px 0 30px */
+            font-weight: 500;
+        }
+
+        /* Headings */
+        h1 {
+            color: var(--primary-blue);
+            font-size: 2.2rem;
+            margin: 0.9375rem 0 1.5625rem;
+            /* 15px 0 25px */
+            animation: textFadeIn 1s ease-out;
+        }
+
+        h2 {
+            color: var(--text-dark);
+            font-size: 1.8rem;
+            margin-bottom: 1.875rem;
+            /* 30px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.9375rem;
+            /* 15px */
+        }
+
+        /* Button Base Styles */
+        .main-button,
+        .lang-btn,
+        .nav-button,
+        .icon-button {
+            border: none;
+            cursor: pointer;
+            border-radius: 0.625rem;
+            /* 10px */
+            padding: 0.9375rem 1.875rem;
+            /* 15px 30px */
+            margin: 0.625rem;
+            /* 10px */
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            /* Smooth transitions for all button properties */
+            box-shadow: 0 0.25rem 0.625rem var(--shadow-light);
+            /* 4px 10px */
+            position: relative;
+            /* For shine effect */
+            overflow: hidden;
+            /* For shine effect */
+        }
+
+        .main-button:hover,
+        .lang-btn:hover,
+        .nav-button:hover,
+        .icon-button:hover {
+            transform: translateY(-0.1875rem);
+            /* -3px */
+            box-shadow: 0 0.375rem 0.9375rem var(--shadow-strong);
+            /* 6px 15px */
+        }
+
+        /* Specific Button Styles */
+        .main-button {
+            background-color: var(--secondary-green);
+            color: white;
+            padding: 1.125rem 2.5rem;
+            /* 18px 40px */
+            font-size: 1.3rem;
+            box-shadow: 0 0.3125rem 0.9375rem rgba(40, 167, 69, 0.3);
+            /* 5px 15px */
+        }
+
+        .main-button:hover {
+            background-color: #218838;
+        }
+
+        .lang-btn {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .lang-btn:hover {
+            background: #0056b3;
+        }
+
+        .nav-button {
+            background: #6c757d;
+            /* Grey for navigation */
+            color: white;
+            display: inline-flex;
+            /* For icon and text */
+            align-items: center;
+            gap: 0.5rem;
+            /* 8px */
+        }
+
+        .nav-button:hover {
+            background: #5a6268;
+        }
+
+        .icon-button {
+            background-color: var(--primary-blue);
+            color: white;
+            border-radius: 50%;
+            /* Circle shape */
+            width: 3.75rem;
+            /* 60px */
+            height: 3.75rem;
+            /* 60px */
+            font-size: 1.8rem;
+            display: inline-flex;
+            /* To center icon */
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0.25rem 0.625rem rgba(0, 123, 255, 0.3);
+            /* 4px 10px */
+            flex-shrink: 0;
+            /* Prevent shrinking in flex container */
+            min-width: 3.75rem;
+            /* Ensure consistent size for touch targets */
+            min-height: 3.75rem;
+        }
+
+        .icon-button:hover {
+            background-color: #0056b3;
+        }
+
+        .icon-button i {
+            pointer-events: none;
+            /* Allows click on parent button */
+        }
+
+
+        /* Screen Management */
+        .screen {
+            display: none;
+            /* When using position: absolute for transitions, the container's height won't adjust to content.
+               By setting .active to position: static, it will re-enter the flow.
+               The critical fix for scrolling is removing overflow:hidden from body/container. */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Occupy full container height initially for transition */
+            padding: 1.875rem;
+            /* 30px */
+            box-sizing: border-box;
+            opacity: 0;
+            pointer-events: none;
+            /* Prevents interaction when hidden */
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            transform: translateY(1.25rem);
+            /* Start slightly below */
+        }
+
+        .screen.active {
+            display: block;
+            opacity: 1;
+            pointer-events: all;
+            /* Allow interaction when active */
+            position: static;
+            /* Take up space in flow, allowing container to expand */
+            transform: translateY(0);
+            /* Move to final position */
+        }
+
+        /* Emoji Options */
+        .emoji-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.9375rem;
+            /* 15px */
+            margin-top: 1.875rem;
+            /* 30px */
+            margin-bottom: 2.5rem;
+            /* 40px */
+        }
+
+        .emoji-btn {
+            font-size: 3.5rem;
+            /* Larger emojis */
+            padding: 0.9375rem 1.25rem;
+            /* 15px 20px */
+            border: 0.1875rem solid #ddd;
+            /* 3px */
+            border-radius: 0.9375rem;
+            /* 15px */
+            background: #fdfdfd;
+            box-shadow: 0 0.3125rem 0.9375rem rgba(0, 0, 0, 0.08);
+            /* 5px 15px */
+            transition: all 0.3s ease;
+            line-height: 1;
+            /* Adjust vertical alignment of emoji */
+            min-width: 6.25rem;
+            /* 100px */
+            min-height: 6.25rem;
+            /* 100px */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .emoji-btn:hover {
+            border-color: var(--primary-blue);
+            background-color: #eef7ff;
+            transform: translateY(-0.3125rem) scale(1.03);
+            /* -5px */
+            box-shadow: 0 0.5rem 1.25rem rgba(0, 123, 255, 0.2);
+            /* 8px 20px */
+        }
+
+        .emoji-btn.selected {
+            background: #d4edda;
+            /* Light green */
+            border-color: var(--secondary-green);
+            transform: scale(1.1);
+            /* Pop effect on selection */
+            box-shadow: 0 0.375rem 1.25rem rgba(40, 167, 69, 0.4);
+            /* 6px 20px */
+        }
+
+        /* Voice Recorder */
+        .voice-recorder-options {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 2.5rem;
+            /* 40px */
+            margin-bottom: 2.5rem;
+            /* 40px */
+        }
+
+        .voice-recorder-options p {
+            font-size: 1.2rem;
+            margin-bottom: 1.25rem;
+            /* 20px */
+            color: var(--text-medium);
+        }
+
+        .recorder-controls {
+            display: flex;
+            gap: 0.625rem;
+            /* 10px */
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            /* Allow wrapping on very small screens */
+        }
+
+        .record-btn,
+        .stop-record-btn,
+        .play-record-btn {
+            width: 4.375rem;
+            /* 70px */
+            height: 4.375rem;
+            /* 70px */
+            font-size: 2rem;
+            border-radius: 50%;
+            margin: 0.625rem;
+            /* 10px */
+            box-shadow: 0 0.25rem 0.625rem var(--shadow-strong);
+            /* 4px 10px */
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            min-width: 4.375rem;
+            /* Ensure consistent size for touch targets */
+            min-height: 4.375rem;
+        }
+
+        .record-btn {
+            background-color: var(--accent-red);
+        }
+
+        .record-btn:hover {
+            background-color: #c82333;
+        }
+
+        .stop-record-btn {
+            background-color: var(--accent-yellow);
+            color: var(--text-dark);
+        }
+
+        .stop-record-btn:hover {
+            background-color: #e0a800;
+        }
+
+        .play-record-btn {
+            background-color: var(--accent-teal);
+        }
+
+        .play-record-btn:hover {
+            background-color: #138496;
+        }
+
+        .recording-status {
+            margin-top: 0.9375rem;
+            /* 15px */
+            font-weight: bold;
+            color: var(--primary-blue);
+            min-height: 1.25rem;
+            /* 20px */
+        }
+
+        #audio-playback {
+            margin-top: 1.25rem;
+            /* 20px */
+            width: 80%;
+            max-width: 25rem;
+            /* 400px */
+            background-color: #f0f0f0;
+            border-radius: 0.5rem;
+            /* 8px */
+        }
+
+        /* Navigation */
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-top: 1.875rem;
+            /* 30px */
+        }
+
+        .navigation-buttons button {
+            flex-grow: 1;
+            margin: 0 0.5rem;
+            /* 8px */
+        }
+
+        /* Progress Bar */
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 0.625rem;
+            /* 10px */
+            height: 0.75rem;
+            /* 12px */
+            margin-bottom: 1.5625rem;
+            /* 25px */
+            overflow: hidden;
+            box-shadow: inset 0 0.0625rem 0.1875rem var(--shadow-light);
+            /* 1px 3px */
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--secondary-green);
+            border-radius: 0.625rem;
+            /* 10px */
+            transition: width 0.6s ease-in-out;
+        }
+
+        .question-counter {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            margin-bottom: 1.25rem;
+            /* 20px */
+        }
+
+        /* Thank You Screen */
+        #thank-you-screen h1 {
+            color: var(--secondary-green);
+            font-size: 2.5rem;
+        }
+
+        #thank-you-screen p {
+            font-size: 1.4rem;
+            margin-top: 1.875rem;
+            /* 30px */
+            color: var(--text-medium);
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Animations */
+        @keyframes shine {
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .main-button.shine-anim {
+            background-image: linear-gradient(to right,
+                    var(--secondary-green) 0%,
+                    #34d058 20%,
+                    /* Lighter green for shine */
+                    var(--secondary-green) 40%,
+                    var(--secondary-green) 100%);
+            background-size: 200% 100%;
+            animation: shine 2s infinite linear;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+            }
+
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 1.25rem rgba(220, 53, 69, 0);
+            }
+
+            /* 20px */
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+            }
+        }
+
+        .record-btn.recording-pulse {
+            animation: pulse 1.5s infinite ease-out;
+        }
+
+        @keyframes textFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(0.625rem);
+                /* 10px */
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive adjustments */
+        /* Tablets (portrait) and larger phones */
+        @media (max-width: 48rem) {
+
+            /* 768px */
+            .container {
+                padding: 1.25rem;
+                /* 20px */
+                border-radius: 1rem;
+                /* 15px */
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .main-button {
+                padding: 0.9375rem 1.875rem;
+                /* 15px 30px */
+                font-size: 1.2rem;
+            }
+
+            .lang-btn,
+            .nav-button {
+                padding: 0.75rem 1.5625rem;
+                /* 12px 25px */
+                font-size: 1rem;
+            }
+
+            .emoji-btn {
+                font-size: 3rem;
+                min-width: 5rem;
+                min-height: 5rem;
+                /* 80px */
+                padding: 0.625rem;
+                /* 10px */
+            }
+
+            .icon-button {
+                width: 3.4375rem;
+                height: 3.4375rem;
+                /* 55px */
+                font-size: 1.6rem;
+            }
+
+            .record-btn,
+            .stop-record-btn,
+            .play-record-btn {
+                width: 3.75rem;
+                height: 3.75rem;
+                /* 60px */
+                font-size: 1.8rem;
+            }
+
+            .voice-recorder-options p {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Mobile phones */
+        @media (max-width: 30rem) {
+
+            /* 480px */
+            body {
+                padding: 0.9375rem;
+                /* 15px */
+                align-items: flex-start;
+                /* Ensure content starts from top */
+            }
+
+            .container {
+                padding: 0.9375rem;
+                /* 15px */
+                border-radius: 0.625rem;
+                /* 10px */
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.3rem;
+                margin-bottom: 1.25rem;
+                /* 20px */
+                gap: 0.625rem;
+                /* 10px */
+            }
+
+            .main-button {
+                padding: 0.75rem 1.5625rem;
+                /* 12px 25px */
+                font-size: 1.1rem;
+            }
+
+            .lang-btn,
+            .nav-button {
+                padding: 0.625rem 1.25rem;
+                /* 10px 20px */
+                font-size: 0.9rem;
+                margin: 0.3125rem;
+                /* 5px */
+            }
+
+            .emoji-btn {
+                font-size: 2.5rem;
+                min-width: 4.375rem;
+                min-height: 4.375rem;
+                /* 70px */
+                padding: 0.5rem;
+                /* 8px */
+            }
+
+            .icon-button {
+                width: 2.8125rem;
+                height: 2.8125rem;
+                /* 45px */
+                font-size: 1.4rem;
+            }
+
+            .record-btn,
+            .stop-record-btn,
+            .play-record-btn {
+                width: 3.125rem;
+                height: 3.125rem;
+                /* 50px */
+                font-size: 1.5rem;
+                margin: 0.5rem;
+                /* 8px */
+            }
+
+            .navigation-buttons {
+                flex-direction: column;
+            }
+
+            /* Stack buttons vertically */
+            .navigation-buttons button {
+                width: 90%;
+                margin: 0.5rem 0;
+                /* 8px */
+            }
+
+            .voice-recorder-options p {
+                font-size: 1rem;
+            }
+
+            .progress-bar-container {
+                margin-bottom: 1.25rem;
+            }
+
+            .question-counter {
+                font-size: 0.9rem;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo-area">
+            <img src="https://growthcatalysts.biz/wp-content/uploads/2025/04/logo-gc-1.png" alt="Logo" />
+            <div class="tagline">Your Health. Our Priority.</div>
+        </div>
+        <div id="scan-screen" class="screen active">
+            <h1>Scan Patient QR</h1>
+            <div id="qr-reader" style="width: 100%; max-width: 400px; margin: auto;"></div>
+            <p id="qr-status" style="margin-top: 1rem; font-weight: bold;"></p>
+        </div>
+
+        <div id="welcome-screen" class="screen active">
+            <h1>Welcome to Patient Feedback!</h1>
+            <p>Your valuable feedback helps us improve our services.</p>
+            <button id="start-survey-btn" class="main-button">Start Survey</button>
+            <div style="margin-top: 1.875rem;">
+                <p>Select Language:</p>
+                <button class="lang-btn" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="hi">मराठी</button>
+            </div>
+        </div>
+
+        <div id="survey-screen" class="screen">
+            <div class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <p id="question-counter" class="question-counter"></p>
+
+            <div class="question-display">
+                <h2 id="question-text"></h2>
+                <button id="listen-question-btn" class="icon-button" title="Read question"><i
+                        class="fas fa-volume-up"></i></button>
+            </div>
+
+            <div id="emoji-options" class="emoji-options hidden">
+                <button class="emoji-btn" data-value="1" title="Very Dissatisfied">😡</button>
+                <button class="emoji-btn" data-value="2" title="Dissatisfied">☹️</button>
+                <button class="emoji-btn" data-value="3" title="Neutral">😐</button>
+                <button class="emoji-btn" data-value="4" title="Satisfied">🙂</button>
+                <button class="emoji-btn" data-value="5" title="Very Satisfied">😊</button>
+            </div>
+
+            <div id="voice-recorder-options" class="voice-recorder-options hidden">
+                <p>Please share your detailed experience:</p>
+                <div class="recorder-controls">
+                    <button id="record-btn" class="record-btn"><i class="fas fa-microphone"></i></button>
+                    <button id="stop-record-btn" class="stop-record-btn hidden"><i class="fas fa-stop"></i></button>
+                    <button id="play-record-btn" class="play-record-btn hidden"><i class="fas fa-play"></i></button>
+                </div>
+                <span id="recording-status"></span>
+                <audio id="audio-playback" controls class="hidden"></audio>
+            </div>
+
+            <div class="navigation-buttons">
+                <button id="prev-question-btn" class="nav-button hidden"><i class="fas fa-chevron-left"></i>
+                    Previous</button>
+                <button id="next-question-btn" class="nav-button">Next <i class="fas fa-chevron-right"></i></button>
+                <button id="submit-survey-btn" class="main-button hidden">Submit <i
+                        class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+
+        <div id="thank-you-screen" class="screen">
+            <h1>Thank You for Your Feedback!</h1>
+            <p>Your insights are invaluable and will help us improve our services.</p>
+            <i class="fas fa-heart" style="font-size: 3rem; color: #e74c3c; margin-top: 1.25rem;"></i>
+        </div>
+    </div>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const emojiBtns = document.querySelectorAll(".emoji-btn");
+        const langBtns = document.querySelectorAll(".lang-btn");
+
+        let language = 'en', qIndex = 0, feedback = {}, recorder, chunks = [], audioBlob, speech;
+
+        const questions = {
+            en: [
+                { id: 'q1', type: 'emoji', text: 'Q1. What is your opinion about the hospital admission process?' },
+                { id: 'q2', type: 'emoji', text: 'Q2. What is your opinion about the billing process?' },
+                { id: 'q3', type: 'emoji', text: 'Q3. How was the nursing staff’s competence and behavior?' },
+                { id: 'q4', type: 'emoji', text: 'Q4. How was the medical officer’s competence and behavior?' },
+                // { id: 'q5', type: 'emoji', text: 'Q5. What is your opinion about the discharge process?' },
+                // { id: 'q6', type: 'emoji', text: 'Q6. How was your experience with the consultant doctors?' },
+                // { id: 'q7', type: 'emoji', text: 'Q7. What is your opinion about treatment and follow-up?' },
+                // { id: 'q8', type: 'emoji', text: 'Q8. How would you rate the hospital and bed sheet cleanliness?' },
+                // { id: 'q9', type: 'emoji', text: 'Q9. How was your experience with the medical services you received?' },
+                // { id: 'q10', type: 'emoji', text: 'Q10. What is your opinion about the front office and reception?' },
+                // { id: 'q11', type: 'emoji', text: 'Q11. How would you rate your overall hospital stay?' },
+                { id: 'q12', type: 'voice', text: 'Q12. Please share your detailed experience.' }
+            ],
+            hi: [
+                { id: 'q1', type: 'emoji', text: 'Q1. रुग्णालयातील भरती प्रकियेबाबत आपले मत' },
+                { id: 'q2', type: 'emoji', text: 'Q2. बिलिंग प्रक्रियेबाबत आपले मत' },
+                { id: 'q3', type: 'emoji', text: 'Q3. नर्सिंग स्टाफ यांची सक्षमता आणि वर्तवणुक' },
+                { id: 'q4', type: 'emoji', text: 'Q4. मेडिकल ऑफिसर यांची सक्षमता आणि वर्तवणुक' },
+                // { id: 'q5', type: 'emoji', text: 'Q5. डिस्चार्ज प्रकिये बाबत आपले मत' },
+                // { id: 'q6', type: 'emoji', text: 'Q6. कन्सल्टन्ट - डॉक्टर बाबत आपले मत' },
+                // { id: 'q7', type: 'emoji', text: 'Q7. ट्रीटमेंट व फोल्लोअप बाबत आपले मत' },
+                // { id: 'q8', type: 'emoji', text: 'Q8. रुग्णालयाची व बेड शीट यांची स्वछता' },
+                // { id: 'q9', type: 'emoji', text: 'Q9. मेडिकल सर्व्हिसेस रुग्णालयात आपल्यलाला मिळालेली सेवा' },
+                // { id: 'q10', type: 'emoji', text: 'Q10. फ्रंट ऑफिस आणि रिसेप्शन बाबत आपले मत' },
+                // { id: 'q11', type: 'emoji', text: 'Q11. एकंदरीत रुग्णालयातील आपले वास्तव्य' },
+                { id: 'q12', type: 'voice', text: 'Q12. कृपया आपल्या अनुभवाविषयी सविस्तर माहिती सांगा' }
+            ]
+        };
+
+        // Add shine animation to start button
+        $('start-survey-btn').classList.add('shine-anim');
+
+        langBtns.forEach(btn => btn.onclick = () => language = btn.dataset.lang);
+
+        $("start-survey-btn").onclick = () => {
+            show("survey-screen");
+            qIndex = 0;
+            loadQuestion();
+        };
+
+        $("prev-question-btn").onclick = () => {
+            if (qIndex > 0) {
+                // Remove existing answers from feedback before moving back to allow re-selection
+                const currentQ = questions[language][qIndex];
+                delete feedback[currentQ.id];
+                qIndex--;
+                loadQuestion();
+            }
+        };
+
+        $("next-question-btn").onclick = () => {
+            const q = questions[language][qIndex];
+            if (q.type === 'emoji' && !feedback[q.id]) {
+                // IMPORTANT: Do NOT use `alert()`. Use custom modal UI for this in production.
+                alert("Please select an emoji before proceeding.");
+                return;
+            }
+            if (q.type === 'voice' && !audioBlob) {
+                // IMPORTANT: Do NOT use `alert()`. Use custom modal UI for this in production.
+                alert("Please record your feedback before proceeding.");
+                return;
+            }
+
+            if (qIndex < questions[language].length - 1) {
+                qIndex++;
+                loadQuestion();
+            }
+        };
+
+        $("submit-survey-btn").onclick = () => {
+            // Simple validation for the last question before submitting
+            const q = questions[language][qIndex];
+            if (q.type === 'emoji' && !feedback[q.id]) {
+                // IMPORTANT: Do NOT use `alert()`. Use custom modal UI for this in production.
+                alert("Please select an emoji before submitting.");
+                return;
+            }
+            if (q.type === 'voice' && !audioBlob) {
+                // IMPORTANT: Do NOT use `alert()`. Use custom modal UI for this in production.
+                alert("Please record your feedback before submitting.");
+                return;
+            }
+
+            show("thank-you-screen");
+            console.log("Feedback submitted:", feedback);
+            // In a real application, you'd send feedback to your server here
+            // e.g., fetch('/api/submit-feedback', { method: 'POST', body: JSON.stringify(feedback) });
+        };
+
+        $("listen-question-btn").onclick = () => {
+            const text = $("question-text").textContent;
+            if (speech && speech.speaking) speech.cancel(); // Prevent looping
+            speech = new SpeechSynthesisUtterance(text);
+            speech.lang = language === "hi" ? "hi-IN" : "en-US";
+            window.speechSynthesis.speak(speech);
+        };
+
+        emojiBtns.forEach(btn => {
+            btn.onclick = () => {
+                emojiBtns.forEach(b => b.classList.remove("selected"));
+                btn.classList.add("selected");
+                feedback[questions[language][qIndex].id] = btn.dataset.value;
+            };
+        });
+
+        $("record-btn").onclick = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                recorder = new MediaRecorder(stream);
+                chunks = [];
+                recorder.ondataavailable = e => chunks.push(e.data);
+                recorder.onstop = () => {
+                    audioBlob = new Blob(chunks, { type: 'audio/webm' });
+                    $("audio-playback").src = URL.createObjectURL(audioBlob);
+                    $("audio-playback").classList.remove("hidden");
+                    $("play-record-btn").classList.remove("hidden");
+
+                    feedback[questions[language][qIndex].id] = {
+                        blob: audioBlob,
+                        type: audioBlob.type
+                    };
+
+                    // Stop pulsing animation
+                    $("record-btn").classList.remove("recording-pulse");
+                };
+                recorder.start();
+                $("recording-status").textContent = "Recording...";
+                $("record-btn").classList.add("hidden", "recording-pulse"); // Add pulsing animation
+                $("stop-record-btn").classList.remove("hidden");
+                $("play-record-btn").classList.add("hidden"); // Hide play button during recording
+                $("audio-playback").classList.add("hidden"); // Hide audio player during recording
+
+            } catch (err) {
+                console.error("Microphone access denied or error:", err);
+                // IMPORTANT: Do NOT use `alert()`. Use custom modal UI for this in production.
+                alert("Microphone access denied. Please allow microphone access to record feedback.");
+                $("recording-status").textContent = "Microphone error.";
+            }
+        };
+
+        $("stop-record-btn").onclick = () => {
+            if (recorder && recorder.state === 'recording') {
+                recorder.stop();
+                recorder.stream.getTracks().forEach(t => t.stop()); // Stop all tracks from the stream
+                $("recording-status").textContent = "Recording saved. You can play it back.";
+                $("record-btn").classList.remove("hidden");
+                $("stop-record-btn").classList.add("hidden");
+                // Pulsing class removed in onstop event handler
+            }
+        };
+
+        $("play-record-btn").onclick = () => $("audio-playback").play();
+
+        function show(id) {
+            // Remove active from all screens to trigger exit animation
+            document.querySelectorAll(".screen").forEach(s => {
+                if (s.classList.contains("active")) {
+                    s.classList.remove("active");
+                }
+            });
+
+            // Add active to the target screen after a slight delay to allow exit animation
+            // This is the core logic for screen transitions
+            setTimeout(() => {
+                $(id).classList.add("active");
+            }, 100); // Small delay, adjust if needed
+        }
+
+        function loadQuestion() {
+            const q = questions[language][qIndex];
+            $("question-text").textContent = q.text;
+            $("question-counter").textContent = `Question ${qIndex + 1} of ${questions[language].length}`;
+
+            // Manage visibility of answer options
+            $("emoji-options").classList.toggle("hidden", q.type !== 'emoji');
+            $("voice-recorder-options").classList.toggle("hidden", q.type !== 'voice');
+
+            // Reset voice recorder UI
+            $("recording-status").textContent = '';
+            $("audio-playback").classList.add("hidden");
+            $("audio-playback").src = ''; // Clear previous audio
+            $("record-btn").classList.remove("hidden", "recording-pulse");
+            $("stop-record-btn").classList.add("hidden");
+            $("play-record-btn").classList.add("hidden");
+            audioBlob = null; // Clear recorded blob for new question
+
+            // If question has existing feedback, restore UI
+            if (feedback[q.id]) {
+                if (q.type === 'emoji') {
+                    emojiBtns.forEach(b => {
+                        b.classList.remove("selected");
+                        if (b.dataset.value === feedback[q.id]) {
+                            b.classList.add("selected");
+                        }
+                    });
+                } else if (q.type === 'voice' && feedback[q.id].blob) {
+                    audioBlob = feedback[q.id].blob;
+                    $("audio-playback").src = URL.createObjectURL(audioBlob);
+                    $("audio-playback").classList.remove("hidden");
+                    $("play-record-btn").classList.remove("hidden");
+                    $("record-btn").classList.add("hidden"); // Hide record button if already recorded
+                    $("recording-status").textContent = "Previous recording available.";
+                }
+            } else {
+                // If no feedback, ensure emojis are unselected
+                emojiBtns.forEach(b => b.classList.remove("selected"));
+            }
+
+            // Manage navigation button visibility
+            $("prev-question-btn").classList.toggle("hidden", qIndex === 0);
+            $("next-question-btn").classList.toggle("hidden", qIndex === questions[language].length - 1);
+            $("submit-survey-btn").classList.toggle("hidden", qIndex !== questions[language].length - 1);
+
+            // Update progress bar
+            $("progress-bar").style.width = ((qIndex + 1) / questions[language].length * 100) + "%";
+        }
+    </script>
+    <script>
+  const qrStatus = document.getElementById("qr-status");
+  const qrScanner = new Html5Qrcode("qr-reader");
+
+  function startQrScan() {
+    qrStatus.textContent = "Initializing camera...";
+
+    qrScanner.start(
+      { facingMode: "environment" },
+      {
+        fps: 10,
+        qrbox: 250
+      },
+      (decodedText, decodedResult) => {
+        qrScanner.stop();
+        qrStatus.textContent = "QR scanned successfully!";
+        try {
+          const patient = JSON.parse(decodedText);
+          feedback["patientId"] = patient.patientId;
+          feedback["visitType"] = patient.visitType;
+          feedback["timestamp"] = patient.timestamp;
+          console.log("Patient Info:", patient);
+          setTimeout(() => {
+            show("welcome-screen");
+          }, 1000);
+        } catch (err) {
+          qrStatus.textContent = "Invalid QR Code!";
+        }
+      },
+      errorMessage => {
+        qrStatus.textContent = "Scanning... " + errorMessage;
+      }
+    ).catch(err => {
+      qrStatus.textContent = "Camera init failed. " + err;
+    });
+  }
+
+  window.onload = startQrScan;
+</script>
+
+</body>
+
+</html>
