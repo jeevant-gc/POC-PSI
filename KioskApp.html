@@ -683,6 +683,61 @@
                 margin-bottom: 1rem;
             }
         }
+
+        /* --- QR Code Scanner specific styles --- */
+        /* Hide scanner UI elements we don't want */
+        #qr-reader .html5-qrcode-button,
+        #qr-reader .html5-qrcode-select-camera,
+        #qr-reader .html5-qrcode-file-input {
+            display: none !important;
+        }
+
+        /* Styling for the error message/status for QR scanner */
+        #qr-status {
+            margin-top: 1rem;
+            font-weight: bold;
+            color: var(--primary-blue); /* Default color */
+        }
+        #qr-status.error {
+            color: var(--accent-red); /* Red for error messages */
+        }
+
+        /* Message for Desktop users */
+        @media only screen and (min-width: 769px) {
+            body {
+                background-color: #ffe0b2;
+                /* A different background for desktop */
+            }
+
+            #scan-screen,
+            #welcome-screen,
+            #survey-screen,
+            #thank-you-screen {
+                display: none !important;
+                /* Hide all screens on desktop */
+            }
+
+            #desktop-message {
+                display: flex;
+                /* Show message on desktop */
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                color: #e65100;
+                font-size: 1.5em;
+                text-align: center;
+                padding: 20px;
+                border: 2px dashed #e65100;
+                border-radius: 10px;
+                min-height: 200px;
+                box-sizing: border-box;
+            }
+        }
+
+        #desktop-message {
+            display: none;
+            /* Hidden by default */
+        }
     </style>
 </head>
 
@@ -692,10 +747,16 @@
             <img src="https://growthcatalysts.biz/wp-content/uploads/2025/04/logo-gc-1.png" alt="Logo" />
             <div class="tagline">Your Health. Our Priority.</div>
         </div>
+
+        <div id="desktop-message">
+            <i class="fas fa-mobile-alt" style="font-size: 3em; margin-bottom: 15px;"></i>
+            This tool is designed for mobile devices only. Please open on a smartphone or tablet.
+        </div>
+
         <div id="scan-screen" class="screen active">
             <h1>Scan Patient QR</h1>
             <div id="qr-reader" style="width: 100%; max-width: 400px; margin: auto;"></div>
-            <p id="qr-status" style="margin-top: 1rem; font-weight: bold;"></p>
+            <p id="qr-status"></p>
         </div>
 
         <div id="welcome-screen" class="screen">
@@ -761,81 +822,142 @@
         const emojiBtns = document.querySelectorAll(".emoji-btn");
         const langBtns = document.querySelectorAll(".lang-btn");
 
-        let language = 'en', qIndex = 0, feedback = {}, recorder, chunks = [], audioBlob, speech;
+        let language = 'en',
+            qIndex = 0,
+            feedback = {},
+            recorder, chunks = [],
+            audioBlob, speech;
+        // Declare html5QrCode globally for stop/restart if needed.
+        let html5QrCode = null;
+
 
         const questions = {
             en: [
-                { id: 'q1', type: 'emoji', text: 'Q1. What is your opinion about the hospital admission process?' },
-                { id: 'q2', type: 'emoji', text: 'Q2. What is your opinion about the billing process?' },
-                { id: 'q3', type: 'emoji', text: 'Q3. How was the nursing staff’s competence and behavior?' },
-                { id: 'q4', type: 'emoji', text: 'Q4. How was the medical officer’s competence and behavior?' },
-                // { id: 'q5', type: 'emoji', text: 'Q5. What is your opinion about the discharge process?' },
-                // { id: 'q6', type: 'emoji', text: 'Q6. How was your experience with the consultant doctors?' },
-                // { id: 'q7', type: 'emoji', text: 'Q7. What is your opinion about treatment and follow-up?' },
-                // { id: 'q8', type: 'emoji', text: 'Q8. How would you rate the hospital and bed sheet cleanliness?' },
-                // { id: 'q9', type: 'emoji', text: 'Q9. How was your experience with the medical services you received?' },
-                // { id: 'q10', type: 'emoji', text: 'Q10. What is your opinion about the front office and reception?' },
-                // { id: 'q11', type: 'emoji', text: 'Q11. How would you rate your overall hospital stay?' },
-                { id: 'q12', type: 'voice', text: 'Q12. Please share your detailed experience.' }
+                { id: 'q1', type: 'emoji', text: 'What is your opinion about the hospital admission process?' },
+                { id: 'q2', type: 'emoji', text: 'What is your opinion about the billing process?' },
+                { id: 'q3', type: 'emoji', text: 'How was the nursing staff’s competence and behavior?' },
+                { id: 'q4', type: 'emoji', text: 'How was the medical officer’s competence and behavior?' },
+                { id: 'q12', type: 'voice', text: 'Please share your detailed experience.' }
             ],
             hi: [
-                { id: 'q1', type: 'emoji', text: 'Q1. रुग्णालयातील भरती प्रकियेबाबत आपले मत' },
-                { id: 'q2', type: 'emoji', text: 'Q2. बिलिंग प्रक्रियेबाबत आपले मत' },
-                { id: 'q3', type: 'emoji', text: 'Q3. नर्सिंग स्टाफ यांची सक्षमता आणि वर्तवणुक' },
-                { id: 'q4', type: 'emoji', text: 'Q4. मेडिकल ऑफिसर यांची सक्षमता आणि वर्तवणुक' },
-                // { id: 'q5', type: 'emoji', text: 'Q5. डिस्चार्ज प्रकिये बाबत आपले मत' },
-                // { id: 'q6', type: 'emoji', text: 'Q6. कन्सल्टन्ट - डॉक्टर बाबत आपले मत' },
-                // { id: 'q7', type: 'emoji', text: 'Q7. ट्रीटमेंट व फोल्लोअप बाबत आपले मत' },
-                // { id: 'q8', type: 'emoji', text: 'Q8. रुग्णालयाची व बेड शीट यांची स्वछता' },
-                // { id: 'q9', type: 'emoji', text: 'Q9. मेडिकल सर्व्हिसेस रुग्णालयात आपल्यलाला मिळालेली सेवा' },
-                // { id: 'q10', type: 'emoji', text: 'Q10. फ्रंट ऑफिस आणि रिसेप्शन बाबत आपले मत' },
-                // { id: 'q11', type: 'emoji', text: 'Q11. एकंदरीत रुग्णालयातील आपले वास्तव्य' },
-                { id: 'q12', type: 'voice', text: 'Q12. कृपया आपल्या अनुभवाविषयी सविस्तर माहिती सांगा' }
+                { id: 'q1', type: 'emoji', text: 'रुग्णालयातील भरती प्रकियेबाबत आपले मत' },
+                { id: 'q2', type: 'emoji', text: 'बिलिंग प्रक्रियेबाबत आपले मत' },
+                { id: 'q3', type: 'emoji', text: 'नर्सिंग स्टाफ यांची सक्षमता आणि वर्तवणुक' },
+                { id: 'q4', type: 'emoji', text: 'मेडिकल ऑफिसर यांची सक्षमता आणि वर्तवणुक' },
+                { id: 'q12', type: 'voice', text: 'कृपया आपल्या अनुभवाविषयी सविस्तर माहिती सांगा' }
             ]
         };
 
         // Add shine animation to start button
         $('start-survey-btn').classList.add('shine-anim');
 
+        // Function to check if the device is likely a mobile
+        function isMobileDevice() {
+            return /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
+        }
+
+        // Updated logStatus to also update qr-status
+        function logStatus(message, isError = false) {
+            const qrStatusElement = $('qr-status');
+            qrStatusElement.textContent = message;
+            if (isError) {
+                qrStatusElement.classList.add('error');
+            } else {
+                qrStatusElement.classList.remove('error');
+            }
+        }
+
         // --- QR Code Scanner Logic ---
-        const html5QrcodeScanner = new Html5QrcodeScanner(
-            "qr-reader", { fps: 10, qrbox: { width: 250, height: 250 } }, /* verbose= */ false);
-
-        function onScanSuccess(decodedText, decodedResult) {
-            // Handle on success condition with the decoded text.
-            console.log(`QR Code matched = ${decodedText}`, decodedResult);
-
-            // Stop the scanner once a QR code is successfully scanned
-            html5QrcodeScanner.clear();
-
-            let patientName = "Guest"; // Default name
-            try {
-                // Assuming the QR code directly contains the patient's name.
-                // If it's a JSON string like '{"patientName": "John Doe", "id": "123"}', you'd parse it:
-                // const qrData = JSON.parse(decodedText);
-                // patientName = qrData.patientName || "Guest";
-                patientName = decodedText; // For simple name in QR
-            } catch (e) {
-                console.error("Could not parse patient name from QR code:", e);
-                // Handle cases where QR text is not a valid patient name format
+        async function startQrScanner() {
+            // Stop any existing scanner instance before starting a new one
+            if (html5QrCode && html5QrCode.isScanning) {
+                await html5QrCode.stop().catch(e => console.warn("Error stopping existing scanner instance:", e));
             }
 
-            // Update the welcome message with the patient's name
-            $('patient-name').textContent = `- ${patientName} `;
+            // Initialize Html5QrCode directly, without Html5QrcodeScanner UI
+            html5QrCode = new Html5Qrcode("qr-reader");
 
-            // Transition to the welcome screen
-            show("welcome-screen");
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0,
+                disableFlip: false // Set to true if you expect inverted QR codes (uncommon)
+            };
+
+            try {
+                logStatus("Scanning for QR Code... Please point your back camera.");
+                // Use facingMode: "environment" to default to the back camera
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    config,
+                    (decodedText, decodedResult) => {
+                        console.log(`QR Code matched = ${decodedText}`, decodedResult);
+                        html5QrCode.stop().then(() => {
+                            let patientName = "Guest";
+                            try {
+                                // Attempt to parse as JSON, fallback to direct text
+                                const qrData = JSON.parse(decodedText);
+                                patientName = qrData.name || qrData.patientName || "Guest";
+                            } catch (e) {
+                                patientName = decodedText; // Assume it's just the name if not JSON
+                            }
+
+                            $('patient-name').textContent = patientName;
+                            show("welcome-screen");
+                        }).catch(err => {
+                            console.error("Failed to stop QR scanner:", err);
+                            logStatus("Error stopping scanner after successful scan.", true);
+                        });
+                    },
+                    (errorMessage) => {
+                        // This callback fires frequently, only update status for significant errors or debug
+                        // console.warn(`QR Scan error: ${errorMessage}`);
+                        logStatus("No QR code detected. Ensure good lighting.", false); // Keep status informative but not overwhelming
+                    }
+                );
+            } catch (err) {
+                console.error("Error starting QR Code scanner:", err);
+                let errorMessage = `Failed to start scanner: ${err.message}`;
+
+                if (err.name === "NotAllowedError") {
+                    errorMessage = "Camera permission denied. Please allow camera access in your browser settings.";
+                } else if (err.name === "NotFoundError" || err.name === "OverconstrainedError") {
+                    errorMessage = "No back camera found or it's not available. This tool requires a back camera.";
+                } else if (err.name === "AbortError") {
+                    errorMessage = "Camera stream could not be started. Try refreshing the page.";
+                }
+
+                logStatus(errorMessage, true); // Display error to user
+                show("scan-screen"); // Ensure scan screen is visible to show error
+            }
         }
-
-        function onScanError(errorMessage) {
-            // Handle scan error.
-            console.warn(`QR Scan error: ${errorMessage}`);
-            $('qr-status').textContent = `Scanning error: ${errorMessage}. Please try again.`;
-        }
-
-        // Start the QR scanner
-        html5QrcodeScanner.render(onScanSuccess, onScanError);
         // --- End QR Code Scanner Logic ---
+
+
+        // Generic function to switch screens
+        function show(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            $(screenId).classList.add('active');
+
+            // Special handling for scanner screen
+            if (screenId === "scan-screen") {
+                if (isMobileDevice()) {
+                    startQrScanner(); // Start scanner only on mobile
+                } else {
+                    // Hide scanner for desktop and show desktop message
+                    $('qr-reader').style.display = 'none';
+                    $('qr-status').style.display = 'none';
+                    $('desktop-message').style.display = 'flex'; // Use flex for centering content
+                }
+            } else {
+                // When moving away from scan-screen, stop the scanner
+                if (html5QrCode && html5QrCode.isScanning) {
+                    html5QrCode.stop().catch(e => console.warn("Error stopping scanner:", e));
+                }
+            }
+        }
 
 
         langBtns.forEach(btn => btn.onclick = () => language = btn.dataset.lang);
@@ -930,6 +1052,7 @@
 
                     // Stop pulsing animation
                     $("record-btn").classList.remove("recording-pulse");
+                    $("recording-status").textContent = "Recording stopped. Ready to play.";
                 };
                 recorder.start();
                 $("recording-status").textContent = "Recording...";
@@ -942,102 +1065,107 @@
                 console.error("Microphone access denied or error:", err);
                 // IMPORTANT: Do NOT use `alert()`. Use custom modal UI for this in production.
                 alert("Microphone access denied. Please allow microphone access to record feedback.");
-                $("recording-status").textContent = "Microphone error.";
+                $("recording-status").textContent = "Microphone access denied!";
+                $("record-btn").classList.remove("hidden"); // Ensure record button is visible if access denied
+                $("record-btn").classList.remove("recording-pulse");
             }
         };
 
         $("stop-record-btn").onclick = () => {
-            if (recorder && recorder.state === 'recording') {
+            if (recorder && recorder.state === "recording") {
                 recorder.stop();
-                recorder.stream.getTracks().forEach(t => t.stop()); // Stop all tracks from the stream
-                $("recording-status").textContent = "Recording saved. You can play it back.";
-                $("record-btn").classList.remove("hidden");
+                recorder.stream.getTracks().forEach(track => track.stop()); // Stop microphone stream
                 $("stop-record-btn").classList.add("hidden");
-                // Pulsing class removed in onstop event handler
+                $("record-btn").classList.remove("hidden"); // Show record button again
+                $("recording-status").textContent = "Recording saved.";
             }
         };
 
-        $("play-record-btn").onclick = () => $("audio-playback").play();
-
-        function show(id) {
-            // Remove active from all screens to trigger exit animation
-            document.querySelectorAll(".screen").forEach(s => {
-                if (s.classList.contains("active")) {
-                    s.classList.remove("active");
-                }
-            });
-
-            // Add active to the target screen after a slight delay to allow exit animation
-            // This is the core logic for screen transitions
-            setTimeout(() => {
-                $(id).classList.add("active");
-            }, 100); // Small delay, adjust if needed
-        }
+        $("play-record-btn").onclick = () => {
+            if ($("audio-playback").src && $("audio-playback").classList.contains("hidden")) {
+                $("audio-playback").classList.remove("hidden");
+                $("audio-playback").play();
+            } else if ($("audio-playback").src) {
+                $("audio-playback").play();
+            }
+        };
 
         function loadQuestion() {
-            const q = questions[language][qIndex];
-            $("question-text").textContent = q.text;
-            $("question-counter").textContent = `Question ${qIndex + 1} of ${questions[language].length}`;
+            const currentQ = questions[language][qIndex];
+            $('question-text').textContent = currentQ.text;
+            $('question-counter').textContent = `Question ${qIndex + 1} of ${questions[language].length}`;
             updateProgressBar();
 
-            // Reset UI for the current question type
-            $("emoji-options").classList.add("hidden");
-            $("voice-recorder-options").classList.add("hidden");
-            $("prev-question-btn").classList.add("hidden");
-            $("next-question-btn").classList.remove("hidden");
-            $("submit-survey-btn").classList.add("hidden");
+            // Reset UI for current question type
+            $('emoji-options').classList.add('hidden');
+            $('voice-recorder-options').classList.add('hidden');
+            $('audio-playback').classList.add('hidden');
+            $('play-record-btn').classList.add('hidden');
+            $('record-btn').classList.remove('hidden'); // Ensure record button is visible for voice
+            $('stop-record-btn').classList.add('hidden'); // Hide stop button initially
+            $('recording-status').textContent = '';
+            emojiBtns.forEach(b => b.classList.remove("selected")); // Deselect all emojis
 
-            if (q.type === 'emoji') {
-                $("emoji-options").classList.remove("hidden");
-                // Select previously selected emoji if available
-                emojiBtns.forEach(btn => {
-                    if (feedback[q.id] === btn.dataset.value) {
-                        btn.classList.add("selected");
-                    } else {
-                        btn.classList.remove("selected");
-                    }
-                });
-            } else if (q.type === 'voice') {
-                $("voice-recorder-options").classList.remove("hidden");
-                // Reset recorder UI
-                $("record-btn").classList.remove("hidden", "recording-pulse");
-                $("stop-record-btn").classList.add("hidden");
-                $("play-record-btn").classList.add("hidden");
-                $("audio-playback").classList.add("hidden");
-                $("recording-status").textContent = "";
-
-                // If audio already exists for this question, load it
-                if (feedback[q.id] && feedback[q.id].blob) {
-                    $("audio-playback").src = URL.createObjectURL(feedback[q.id].blob);
+            if (currentQ.type === 'emoji') {
+                $('emoji-options').classList.remove('hidden');
+                // Pre-select if an answer already exists for this question
+                if (feedback[currentQ.id]) {
+                    document.querySelector(`.emoji-btn[data-value="${feedback[currentQ.id]}"]`).classList.add('selected');
+                }
+            } else if (currentQ.type === 'voice') {
+                $('voice-recorder-options').classList.remove('hidden');
+                // If a voice recording exists, show play button and audio player
+                if (feedback[currentQ.id] && feedback[currentQ.id].blob) {
+                    audioBlob = feedback[currentQ.id].blob;
+                    $("audio-playback").src = URL.createObjectURL(audioBlob);
                     $("audio-playback").classList.remove("hidden");
                     $("play-record-btn").classList.remove("hidden");
                     $("recording-status").textContent = "Recording available.";
+                    $("record-btn").classList.remove("hidden"); // Keep record button for re-recording
+                } else {
+                    audioBlob = null; // Clear previous recording if question is changed
                 }
             }
 
-            // Update navigation buttons
-            if (qIndex > 0) {
-                $("prev-question-btn").classList.remove("hidden");
+            // Navigation button visibility
+            if (qIndex === 0) {
+                $('prev-question-btn').classList.add('hidden');
+            } else {
+                $('prev-question-btn').classList.remove('hidden');
             }
 
             if (qIndex === questions[language].length - 1) {
-                $("next-question-btn").classList.add("hidden");
-                $("submit-survey-btn").classList.remove("hidden");
+                $('next-question-btn').classList.add('hidden');
+                $('submit-survey-btn').classList.remove('hidden');
+            } else {
+                $('next-question-btn').classList.remove('hidden');
+                $('submit-survey-btn').classList.add('hidden');
             }
         }
 
         function updateProgressBar() {
-            const progress = ((qIndex + 1) / questions[language].length) * 100;
-            $("progress-bar").style.width = `${progress}%`;
+            const totalQuestions = questions[language].length;
+            const progress = ((qIndex + 1) / totalQuestions) * 100;
+            $('progress-bar').style.width = `${progress}%`;
         }
 
-        // Initial setup
+        // --- Initial Load Logic ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Ensure only the scan-screen is active on load
-            document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-            $('scan-screen').classList.add('active');
-        });
+            // Start by showing the scan screen and initiating scanner if on mobile
+            show("scan-screen");
 
+            // Add an event listener for when the page becomes visible again (e.g., from background on mobile)
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible' && isMobileDevice() &&
+                    $('scan-screen').classList.contains('active')) {
+                    // Only restart if on scan screen and it's a mobile device
+                    startQrScanner();
+                } else if (document.visibilityState === 'hidden' && html5QrCode && html5QrCode.isScanning) {
+                    // Stop scanner when app goes to background to save power
+                    html5QrCode.stop().catch(e => console.warn("Error stopping scanner on visibility change:", e));
+                }
+            });
+        });
     </script>
 </body>
 
